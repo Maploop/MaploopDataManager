@@ -4,15 +4,24 @@ import imgui.*;
 import imgui.app.Application;
 import imgui.app.Configuration;
 import imgui.flag.*;
+import imgui.gl3.ImGuiImplGl3;
+import imgui.glfw.ImGuiImplGlfw;
 import imgui.type.ImString;
+import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GL11;
+
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
 
-import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-public class Entry extends Application {
+import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.system.MemoryStack.stackPush;
+
+public class MaploopDataManager extends Application {
     public static boolean openModal = false;
     public static final String _appTitle = "Intelligence Center TV1";
 
@@ -24,7 +33,7 @@ public class Entry extends Application {
     boolean devMode = false;
     public static ImString console = new ImString();
 
-    public Entry() {
+    public MaploopDataManager() {
         DataHandler.Load();
         /* can't fiddle with this shit apparently */
         // super= new Color(0, 0, 0, 1);
@@ -36,24 +45,6 @@ public class Entry extends Application {
     @Override
     protected void configure(Configuration config) {
         config.setTitle("Maploop Confidential Intel Center");
-
-        // config.setFullScreen(true);
-
-    }
-
-    @Override
-    protected void postRun() {
-        super.postRun();
-
-    }
-
-    @Override
-    protected void preRun() {
-        super.preRun();
-        ImGuiIO IO = ImGui.getIO();
-        // IO.getFonts().addFontDefault();
-        // IO.setFontDefault(IO.getFonts().addFontFromFileTTF("Arial.ttf", 256));
-        // IO.getFonts().build();
     }
 
     boolean themeModal = false;
@@ -136,8 +127,9 @@ public class Entry extends Application {
             System.exit(0);
         }
         ImGui.text("");
-        ImGui.text("CFG [DO NOT EDIT]");
-        ImGui.inputText("Saves Folder", savedFilesPath);
+        ImGui.text("Configuration");
+        ImGui.text(".SHEN Files Directory");
+        ImGui.inputText("##Saves Folder", savedFilesPath);
         if (ImGui.button("Update Config")) {
             DataHandler._savedFilesPath = savedFilesPath.toString();
             try {
@@ -196,6 +188,6 @@ public class Entry extends Application {
             }
         });
 
-        launch(new Entry());
+        launch(new MaploopDataManager());
     }
 }

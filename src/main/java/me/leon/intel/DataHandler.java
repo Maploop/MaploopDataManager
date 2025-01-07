@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DataHandler {
     public static String _savedFilesPath = ".";
@@ -105,6 +106,7 @@ public class DataHandler {
                 ImGui.getStyle().setColor(ImGuiCol.Button, 255, 0, 0, 255);
             }
             if (ImGui.button("[DOC] " + name, 960, 30)) {
+                ImGui.setNextWindowSize(500, 300);
                 if (!_openWindows.containsKey(name)) {
                     _openWindows.put(name, true);
                 } else {
@@ -174,7 +176,6 @@ public class DataHandler {
             boolean open = _openWindows.get(name);
 
             if (open) {
-                ImGui.setNextWindowSize(500, 300);
                 ImGui.begin(name);
                 ImGui.setCursorPosX(ImGui.getWindowSizeX() - 40);
                 if (ImGui.button("X", 20, 20)) {
@@ -184,10 +185,13 @@ public class DataHandler {
                 ImGui.sameLine();
                 ImGui.setCursorPosX(10);
                 ImGui.text(data.getString("description"));
+                ImGui.newLine();
 
                 HashMap<String, String> internal = (HashMap<String, String>) data.get("data");
                 String finalName = name;
+                AtomicInteger counter = new AtomicInteger();
                 internal.forEach((key, value) -> {
+                    counter.addAndGet(1);
                     ImString txt = new ImString(value.toString(), 255);
                     if (!_internalData.containsKey(finalName)) {
                         Map<String, ImString> map = new HashMap<>();
@@ -198,11 +202,12 @@ public class DataHandler {
                         map.put(key, txt);
                         _internalData.put(finalName, map);
                     }
-                    ImGui.inputText(key.toString(), _internalData.get(finalName).get(key));
+                    ImGui.text(key.toString());
+                    ImGui.inputText("##" + counter.get(), _internalData.get(finalName).get(key));
                     ImGui.sameLine();
-                    if (ImGui.button("Copy")) {
+                    if (ImGui.button("Copy " + counter.get())) {
                         ImGui.setClipboardText(_internalData.get(finalName).get(key).toString());
-                        ToastNotif.showToast("Copied!", "Copied to clipboard", 3);
+                        System.out.println("Copied text to clipboard");
                     }
                 });
 
