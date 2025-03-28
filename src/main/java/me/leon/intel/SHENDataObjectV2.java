@@ -7,16 +7,21 @@ import org.json.simple.parser.JSONParser;
 import java.io.File;
 import java.util.Map;
 
-public class SHENDataObject {
+public class SHENDataObjectV2 {
     private final File filePath;
     private JSONObject jsonObject;
 
-    public SHENDataObject() {
+    public SHENDataObjectV2() {
         filePath = null;
         jsonObject = new JSONObject();
     }
 
-    public SHENDataObject(File file) {
+    public SHENDataObjectV2(File file, JSONObject obj) {
+        filePath = file;
+        jsonObject = obj;
+    }
+
+    public SHENDataObjectV2(File file) {
         filePath = file;
 
         if (!file.exists()) {
@@ -24,7 +29,7 @@ public class SHENDataObject {
             return;
         }
         try {
-            String dcc = DataEncoder.DEC_BIN_(CUtil.readFromFile(file));
+            String dcc = SecurityV2.decode(CUtil.readFromFile(file));
 
             jsonObject = (JSONObject) new JSONParser().parse(dcc);
         } catch (Exception e) {
@@ -40,20 +45,20 @@ public class SHENDataObject {
         return jsonObject;
     }
 
-    public SHENDataObject put(String key, Object value) {
+    public SHENDataObjectV2 put(String key, Object value) {
         jsonObject.put(key, value);
         return this;
     }
 
-    public SHENDataObject set(String key, Object value) {
+    public SHENDataObjectV2 set(String key, Object value) {
         return put(key, value);
     }
 
-    public SHENDataObject append(String key, Object value) {
+    public SHENDataObjectV2 append(String key, Object value) {
         return put(key, value);
     }
 
-    public SHENDataObject save() {
+    public SHENDataObjectV2 save() {
         if (!filePath.exists()) {
             try {
                 filePath.createNewFile();
@@ -62,7 +67,7 @@ public class SHENDataObject {
             }
         }
         String jsonString = jsonObject.toJSONString();
-        CUtil.writeToFile(filePath, DataEncoder.ENC_BIN_(jsonString));
+        CUtil.writeToFile(filePath, SecurityV2.encode(jsonString));
         return this;
     }
 

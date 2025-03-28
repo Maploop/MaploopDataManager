@@ -24,9 +24,12 @@ public class DataHandler {
     public static final Map<String, Map<String, ImString>> _internalData = new HashMap<>();
 
     private static final List<String> _alreadyErroredKeys = new ArrayList<>();
-    public static List<SHENDataObject> _dataObjects = new ArrayList<>();
+    public static List<SHENDataObjectV2> _dataObjects = new ArrayList<>();
 
-    public static void Load() {
+    private static int dataSize = 0;
+    public static int corruptedSize = 0;
+
+    public static void PreLoad() {
         if (!_localConfigFile.exists()) {
             try {
                 _localConfigFile.createNewFile();
@@ -43,18 +46,25 @@ public class DataHandler {
         if (cfg.get("savedFilesPath") != null) {
             _savedFilesPath = cfg.getString("savedFilesPath");
         }
+    }
+
+    public static void Load() {
+        SHENDataObject cfg = new SHENDataObject(_localConfigFile);
         JSONArray arr = cfg.getArray("fileList");
         if (arr == null)
             return;
         for (Object obj : arr) {
             String str = obj.toString();
-            _dataObjects.add(new SHENDataObject(new File(str)));
+            _dataObjects.add(new SHENDataObjectV2(new File(str)));
             System.out.println("-> LOADED '" + str + "' IN.");
         }
+
+        dataSize = arr.size();
+        System.out.println("Loaded " + dataSize + " data objects.");
     }
 
     public static void CreateNew(String displayName, String desc) {
-        SHENDataObject data = new SHENDataObject(
+        SHENDataObjectV2 data = new SHENDataObjectV2(
                 new File(_savedFilesPath + File.separator + CUtil.trimString(displayName) + ".SHEN"));
         data.append("displayName", displayName)
                 .append("description", desc)
@@ -74,7 +84,7 @@ public class DataHandler {
         SHENDataObject cfg = new SHENDataObject(_localConfigFile);
 
         List<String> stringArr = new ArrayList<>();
-        for (SHENDataObject data : _dataObjects) {
+        for (SHENDataObjectV2 data : _dataObjects) {
             stringArr.add(data.getFilePath().getCanonicalPath());
         }
 
@@ -84,7 +94,7 @@ public class DataHandler {
     }
 
     public static void UpdateList() {
-        for (SHENDataObject data : _dataObjects) {
+        for (SHENDataObjectV2 data : _dataObjects) {
             if (data == null) {
                 System.out.println("ERR- 1 FILE WAS CORRUPT (?)");
                 continue;
@@ -98,6 +108,7 @@ public class DataHandler {
                     System.out.println("<!> '" + data.getFilePath().getPath() + "' MISSING PROPERTY \"displayName\"");
                     _alreadyErroredKeys.add(p);
                     System.out.println("-> INTERNAL POLICTY: THIS ERROR WILL ONLY BE SHOWN ONCE.");
+                    corruptedSize++;
                 }
                 name = "[CORRUPTED] " + data.getFilePath().getName();
             }
@@ -117,9 +128,15 @@ public class DataHandler {
                 ImGui.getStyle().setColor(ImGuiCol.Button, 126, 66, 245, 255);
             }
         }
+
+        if (corruptedSize >= dataSize) {
+            System.out.println("<!> ALL DATA OBJECTS ARE CORRUPTED. ASSUMING WRONG PASSCODE");
+
+            MaploopDataManager.incorrectPassword = true;
+        }
     }
 
-    static SHENDataObject nextData = null;
+    static SHENDataObjectV2 nextData = null;
     static boolean openModal = false;
     static ImString propName = new ImString();
     static ImString propVal = new ImString();
@@ -153,7 +170,7 @@ public class DataHandler {
             return;
         }
 
-        for (SHENDataObject data : _dataObjects) {
+        for (SHENDataObjectV2 data : _dataObjects) {
             if (data == null) {
                 System.out.println("<!> 1 FILE WAS CORRUPT (?)");
                 continue;

@@ -28,16 +28,14 @@ public class MaploopDataManager extends Application {
     ImString display = new ImString();
     ImString desc = new ImString();
     ImString savedFilesPath = new ImString();
+    public static ImString passcode = new ImString();
     ImString themeFile = new ImString();
 
     boolean devMode = false;
     public static ImString console = new ImString();
 
     public MaploopDataManager() {
-        DataHandler.Load();
-        /* can't fiddle with this shit apparently */
-        // super= new Color(0, 0, 0, 1);
-        // new ABS_MDB_HANDLE().initiateConnection();
+        DataHandler.PreLoad();
         savedFilesPath = new ImString(DataHandler._savedFilesPath, 255);
         themeFile = new ImString(DataHandler._themeFile);
     }
@@ -48,6 +46,10 @@ public class MaploopDataManager extends Application {
     }
 
     boolean themeModal = false;
+    boolean passcodeModal = true;
+    boolean error = false;
+    public static boolean incorrectPassword = false;
+    boolean passcodeExplainModal = false;
 
     ImString logStr = new ImString(999);
 
@@ -59,6 +61,91 @@ public class MaploopDataManager extends Application {
         ImGui.getStyle().setColor(ImGuiCol.ChildBg, 252, 21, 0, 255);
         ImGui.getStyle().setFramePadding(5, 5);
         ImGui.getStyle().setFrameRounding(5);
+
+        if (incorrectPassword) {
+            ImGui.begin("Incorrect Password", ImGuiWindowFlags.NoCollapse |
+                    ImGuiWindowFlags.NoMove |
+                    ImGuiWindowFlags.NoResize);
+            ImGui.text("PLEASE ENTER A VALID KEY");
+            ImGui.getStyle().setColor(ImGuiCol.Text, 245, 56, 56, 255);
+            ImGui.text("The key you entered was unable to decrypt the necessary data.\n" +
+                    "Please try again.");
+            ImGui.getStyle().setColor(ImGuiCol.Text, 255, 255, 255, 255);
+            ImGui.newLine();
+            if (ImGui.button("Try again")) {
+                DataHandler._dataObjects.clear();
+                DataHandler.corruptedSize = 0;
+                incorrectPassword = false;
+                passcodeModal = true;
+            }
+            ImGui.getStyle().setColor(ImGuiCol.Button, 245, 56, 56, 255);
+            ImGui.sameLine();
+            if (ImGui.button("Exit")) {
+                System.exit(0);
+            }
+            ImGui.end();
+            return;
+        }
+
+        if (passcodeExplainModal) {
+            ImGui.begin("What is this?", ImGuiWindowFlags.NoCollapse |
+                    ImGuiWindowFlags.NoMove |
+                    ImGuiWindowFlags.NoResize);
+            ImGui.text("This is a key that is used to encrypt your data.\n" +
+                    "It is used to prevent unauthorized access to your data.\n" +
+                    "If you lose this key, you will lose access to your data.\n" +
+                    "Keep in mind that if you enter a wrong different key, and use\n" +
+                    "that key to create a new node, the node will be encoded with your\n" +
+                    "current key, and will not work with your main key that you chose before.");
+            if (ImGui.button("Okay")) {
+                passcodeExplainModal = false;
+                passcodeModal = true;
+            }
+            ImGui.end();
+            return;
+        }
+
+        if (passcodeModal) {
+            ImGui.begin("Confirm Identity", ImGuiWindowFlags.NoCollapse |
+                    ImGuiWindowFlags.NoMove |
+                    ImGuiWindowFlags.NoResize);
+            if (error) {
+                ImGui.getStyle().setColor(ImGuiCol.Text, 245, 56, 56, 255);
+                ImGui.text("Please enter a valid key");
+                ImGui.getStyle().setColor(ImGuiCol.Text, 255, 255, 255, 255);
+            }
+            if (ImGui.inputText("Enter your key", SecurityV2.key, ImGuiInputTextFlags.AutoSelectAll |
+                    ImGuiInputTextFlags.EnterReturnsTrue | ImGuiInputTextFlags.Password)) {
+                if (confirmKey()) {
+                    passcodeModal = false;
+                } else {
+                    error = true;
+                }
+            }
+
+            ImGui.getStyle().setColor(ImGuiCol.Button, 42, 168, 3, 255);
+            if (ImGui.button("Confirm")) {
+                if (confirmKey()) {
+                    passcodeModal = false;
+                } else {
+                    error = true;
+                }
+            }
+            ImGui.getStyle().setColor(ImGuiCol.Button, 245, 56, 56, 255);
+            ImGui.sameLine();
+            if (ImGui.button("Exit")) {
+                System.exit(0);
+            }
+            ImGui.getStyle().setColor(ImGuiCol.Button, 110, 3, 168, 255);
+            ImGui.sameLine();
+            if (ImGui.button("What is this?")) {
+                passcodeExplainModal = true;
+                passcodeModal = false;
+            }
+            ImGui.end();
+
+            return;
+        }
 
         if (themeModal) {
             ImGui.begin("Theme INPUT", ImGuiWindowFlags.NoCollapse |
@@ -123,8 +210,12 @@ public class MaploopDataManager extends Application {
         if (ImGui.button("Create New Node")) {
             openModal = true;
         }
-        if (ImGui.button("Exit")) {
-            System.exit(0);
+        if (ImGui.button("Lock")) {
+            passcodeModal = true;
+
+            SecurityV2.key.set("");
+            DataHandler.corruptedSize = 0;
+            DataHandler._dataObjects.clear();
         }
         ImGui.text("");
         ImGui.text("Configuration");
@@ -177,6 +268,17 @@ public class MaploopDataManager extends Application {
         dialog.setVisible(true);
 
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+    }
+
+    private boolean confirmKey() {
+        if (SecurityV2.key.get().isEmpty()) {
+            System.out.println("No key set");
+            return false;
+        }
+        passcodeModal = false;
+        System.out.println("Passcode Confirmed " + SecurityV2.key.get());
+        DataHandler.Load();
+        return true;
     }
 
     public static void main(String[] args) {
