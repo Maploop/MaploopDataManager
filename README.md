@@ -1,8 +1,8 @@
 # Maploop's Data Manager
 This is a simple data-document management application. Mainly developped to store your passwords locally without having to worry about others accessing your files and knowing them.
 
-| Table of  | Contents | 
-|----------|
+| Table of Contents |  | 
+|----- | -----|
 | 1. [Security](#security) | 2. [Structure](#structure) |
 | 3. [To-Do List](#to-do-list) | 4. [Installation](#installation) |
 | 5. [Compiling](#compiling) | 6. [Contribute](#contribute) |
