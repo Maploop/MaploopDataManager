@@ -1,43 +1,45 @@
 # Maploop's Data Manager
-This is basically an application that allows you to manage your passwords, credit cards, or any form or "written data"
-in an organized way.
+This is a simple data-document management application. Mainly developped to store your passwords locally without having to worry about others accessing your files and knowing them.
 
-## Features
-- Organizes each "document" of data into its own .SHEN file
-- Allows you to add, remove, and edit data
-- Basic level of security using a binary and base64 encryption
+Table of Conents 
+|-------------------------------------------------------|
+| 1. [Security](#security) | 2. [Structure](#structure) |
+| 3. [To-Do List](#to-do-list) | 4. [Installation](#installation) |
+| 5. [Compiling](#compiling) | 6. [Contribute](#contribute) |
 
-## Planned Features
-- Allow you to export your dat to a .CSV or a .JSON file
-- Allow you to import your data from a .CSV or a .JSON file
-- Allow you to search across all your data
-- Increase data security by introducing encryption keys etc.
 
-## Usage
-Note: This application is still in development and is not yet fully functional. Therefore, I am not going to document the usage of this application just yet.
 
-## Contrubuting
-Contributing is closed right now. The application needs to be re-written in a much cleaner and much more functional codebase.
 
-## License
-MIT License
+# Security
+Maploop's Data Manager uses an encryption system with a key, called 'SHEN'. It's a self-made name! It encodes your data into Base64. **The data cannot be decoded without having the key**. It is recommended to keep this key short, as the app does not save your key anywhere and you have to enter it every time you want to open the application.
 
-Copyright (c) 2025 @ Maploop LLC.
+#### In Layman's terms, you must memorize your own key, so it's recommended to keep it short.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+# Structure
+The app uses a node system. Each node acts as a document, each document can have an infinite number of fields, (keys and values). The only limitation is you cannot have a node within a node.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+# To-Do List
+Sorted by priority;
+- [ ]  Editing/Deleting Nodes
+- [ ]  An actual respectable options modal
+- [ ]  An actual respectable developer mode setting
+- [ ]  Improve UX
+- [ ]  Custom themes
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+# Installation
+Here are some steps on the installation:
+1. Download the `Maploop's Data Manager.zip` from [here](https://github.com/Maploop/MaploopDataManager/releases/latest).
+2. Extract the contents to a safe folder, make sure the `imgui.ini` and `IntelligenceCenter-1.0-SNAPSHOT.jar` file are in the same folder.
+3. Run `IntelligenceCenter-1.0-SNAPSHOT.jar` and enter your desired key. (Keep in mind this key is going to be your password to entering the app and the decryption key to your files **FOREVER**.)
+4. (OPTIONAL) Create a desktop shortcut of the .jar file and add it to your start menu!
+
+# Compiling
+Open your terminal and run the following commands:
+1. `git clone https://github.com/Maploop/MaploopDataManager.git`
+2. `cd MaploopDataManager`
+3. `mvn clean package`
+And then, to run the app simply do `java -jar target/IntelligenceCenter-1.0-SNAPSHOT.jar` or just double click on the output file.
+
+# Contribute
+Pull-requests are welcome. I personally do not update this project very often, I would appericiate feedback in issues or pull requests for new features and fixes.
+The current code is **very messy** and the reason is this project started off as a personal thing I would only use myself. But I'm planning to expand on it.
