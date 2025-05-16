@@ -6,6 +6,7 @@ import imgui.app.Configuration;
 import imgui.flag.*;
 import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
+import imgui.internal.flag.ImGuiItemFlags;
 import imgui.type.ImString;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
@@ -17,6 +18,7 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -24,6 +26,8 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 public class MaploopDataManager extends Application {
     public static boolean openModal = false;
     public static final String _appTitle = "Intelligence Center TV1";
+
+    public static int attempt = 0;
 
     ImString display = new ImString();
     ImString desc = new ImString();
@@ -49,9 +53,15 @@ public class MaploopDataManager extends Application {
     boolean passcodeModal = true;
     boolean error = false;
     public static boolean incorrectPassword = false;
+    public static boolean changePasswordModal = false;
+    boolean tooManyAttempts = false;
     boolean passcodeExplainModal = false;
 
     ImString logStr = new ImString(999);
+    ImString newPass1 = new ImString();
+    ImString newPass2 = new ImString();
+
+    String passcodeError = "";
 
     @Override
     public void process() {
@@ -61,6 +71,50 @@ public class MaploopDataManager extends Application {
         ImGui.getStyle().setColor(ImGuiCol.ChildBg, 252, 21, 0, 255);
         ImGui.getStyle().setFramePadding(5, 5);
         ImGui.getStyle().setFrameRounding(5);
+
+        if (changePasswordModal) {
+            ImGui.begin("Change Password", ImGuiWindowFlags.NoCollapse |
+                    ImGuiWindowFlags.NoMove |
+                    ImGuiWindowFlags.NoResize);
+            ImGui.text("Enter your current password");
+            ImGui.inputText("Current Password", SecurityV2.key);
+            ImGui.text("Enter your new password");
+            ImGui.inputText("New Password", newPass1);
+            ImGui.text("Confirm your new password");
+            ImGui.inputText("Confirm New Password", newPass2);
+            if (!Objects.equals(passcodeError, "")) {
+                ImGui.getStyle().setColor(ImGuiCol.Text, 245, 56, 56, 255);
+                ImGui.text(passcodeError);
+                ImGui.getStyle().setColor(ImGuiCol.Text, 255, 255, 255, 255);
+            }
+            ImGui.getStyle().setColor(ImGuiCol.Button, 209, 204, 61, 255);
+            ImGui.getStyle().setColor(ImGuiCol.Text, 0, 0, 0, 255);
+            if (ImGui.button("Change Password")) {
+                if (!newPass1.get().equals(newPass2.get())) {
+                    passcodeError = "Passwords do not match.";
+                    ImGui.end();
+                    return;
+                }
+                if (!Conversion.convert(newPass1.get())) {
+                    passcodeError = "Wrong previous password.";
+                    ImGui.end();
+                    return;
+                }
+                newPass2.set("");
+                DataHandler.corruptedSize = 0;
+                changePasswordModal = false;
+            }
+            ImGui.getStyle().setColor(ImGuiCol.Text, 255, 255, 255, 255);
+            ImGui.getStyle().setColor(ImGuiCol.Button, 110, 3, 168, 255);
+            ImGui.sameLine();
+            if (ImGui.button("Cancel")) {
+                changePasswordModal = false;
+                passcodeError = "";
+                passcodeModal = true;
+            }
+            ImGui.end();
+            return;
+        }
 
         if (incorrectPassword) {
             ImGui.begin("Incorrect Password", ImGuiWindowFlags.NoCollapse |
@@ -72,12 +126,29 @@ public class MaploopDataManager extends Application {
                     "Please try again.");
             ImGui.getStyle().setColor(ImGuiCol.Text, 255, 255, 255, 255);
             ImGui.newLine();
+            ImGui.getStyle().setColor(ImGuiCol.Text, 245, 56, 56, 255);
+            if (tooManyAttempts) {
+                ImGui.text("Too many attempts!");
+            }
+            ImGui.getStyle().setColor(ImGuiCol.Text, 255, 255, 255, 255);
+
             if (ImGui.button("Try again")) {
+                if (attempt >= 3) {
+                    System.out.println("Too many attempts");
+                    tooManyAttempts = true;
+                    ImGui.end();
+                    return;
+                }
+
                 DataHandler._dataObjects.clear();
                 DataHandler.corruptedSize = 0;
+                DataHandler._alreadyErroredKeys.clear();
+                attempt++;
+                System.out.println("Attempt " + attempt);
                 incorrectPassword = false;
                 passcodeModal = true;
             }
+
             ImGui.getStyle().setColor(ImGuiCol.Button, 245, 56, 56, 255);
             ImGui.sameLine();
             if (ImGui.button("Exit")) {
@@ -114,28 +185,32 @@ public class MaploopDataManager extends Application {
                 ImGui.text("Please enter a valid key");
                 ImGui.getStyle().setColor(ImGuiCol.Text, 255, 255, 255, 255);
             }
-            if (ImGui.inputText("Enter your key", SecurityV2.key, ImGuiInputTextFlags.AutoSelectAll |
-                    ImGuiInputTextFlags.EnterReturnsTrue | ImGuiInputTextFlags.Password)) {
+            boolean t = ImGui.inputText("Enter your key", SecurityV2.key, ImGuiInputTextFlags.AutoSelectAll |
+                    ImGuiInputTextFlags.EnterReturnsTrue | ImGuiInputTextFlags.Password);
+            if (t) {
                 if (confirmKey()) {
                     passcodeModal = false;
                 } else {
                     error = true;
                 }
             }
+            ImGui.getStyle().setColor(ImGuiCol.Text, 60, 201, 60, 255);
+            ImGui.text("Press [Enter] to proceed.");
+            ImGui.getStyle().setColor(ImGuiCol.Text, 255, 255, 255, 255);
 
-            ImGui.getStyle().setColor(ImGuiCol.Button, 42, 168, 3, 255);
-            if (ImGui.button("Confirm")) {
-                if (confirmKey()) {
-                    passcodeModal = false;
-                } else {
-                    error = true;
-                }
-            }
+
             ImGui.getStyle().setColor(ImGuiCol.Button, 245, 56, 56, 255);
-            ImGui.sameLine();
             if (ImGui.button("Exit")) {
                 System.exit(0);
             }
+            ImGui.getStyle().setColor(ImGuiCol.Button, 209, 204, 61, 255);
+            ImGui.getStyle().setColor(ImGuiCol.Text, 0, 0, 0, 255);
+            ImGui.sameLine();
+            if (ImGui.button("Change Password")) {
+                changePasswordModal = true;
+                passcodeModal = false;
+            }
+            ImGui.getStyle().setColor(ImGuiCol.Text, 255, 255, 255, 255);
             ImGui.getStyle().setColor(ImGuiCol.Button, 110, 3, 168, 255);
             ImGui.sameLine();
             if (ImGui.button("What is this?")) {
@@ -213,6 +288,7 @@ public class MaploopDataManager extends Application {
         if (ImGui.button("Lock")) {
             passcodeModal = true;
 
+            error = false;
             SecurityV2.key.set("");
             DataHandler.corruptedSize = 0;
             DataHandler._dataObjects.clear();

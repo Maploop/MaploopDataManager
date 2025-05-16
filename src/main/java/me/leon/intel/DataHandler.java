@@ -23,7 +23,7 @@ public class DataHandler {
     public static final Map<String, Boolean> _openWindows = new HashMap<>();
     public static final Map<String, Map<String, ImString>> _internalData = new HashMap<>();
 
-    private static final List<String> _alreadyErroredKeys = new ArrayList<>();
+    public static final List<String> _alreadyErroredKeys = new ArrayList<>();
     public static List<SHENDataObjectV2> _dataObjects = new ArrayList<>();
 
     private static int dataSize = 0;
@@ -131,6 +131,9 @@ public class DataHandler {
 
         if (corruptedSize >= dataSize) {
             System.out.println("<!> ALL DATA OBJECTS ARE CORRUPTED. ASSUMING WRONG PASSCODE");
+            if (Conversion.attemptingChangePasscode) {
+                throw new IllegalStateException("Wrong passcode while attempting to change.");
+            }
 
             MaploopDataManager.incorrectPassword = true;
         }
